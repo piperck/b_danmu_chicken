@@ -30,6 +30,7 @@ class DMJBot(object):
 
         # tcp_socket return
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         s.connect((self.dm_host, 2243))
         print self.dm_host
         return s
@@ -64,16 +65,20 @@ class DMJBot(object):
 
         # 会断是因为心跳问题，需要30秒内发送心跳
         # 这里先接收确认进入房间的信息
-        x = self.socket_client.recv(16)
+        self.socket_client.recv(16)
         while True:
-            data = self.socket_client.recv(self.max_data_length)
-            data_length, magic, ver, message_type, package_type = struct.unpack('!IHHII', data[0:16])
+            pre_data = self.socket_client.recv(16)
+            try:
+                data_length, magic, ver, message_type, package_type = struct.unpack('!IHHII', pre_data)
+            except struct.error:
+                print pre_data, len(pre_data)
             if data_length == 16:
                 print data_length
                 continue
             try:
-                json = data[16:].decode('utf-8')
+                json = self.socket_client.recv(data_length-16).decode('utf-8')
                 json_data = simplejson.loads(json)
+                print json_data
             except simplejson.JSONDecodeError:
                 print 'wrong+++++++++++'
                 print data[16:].decode('utf-8')
@@ -85,7 +90,7 @@ class DMJBot(object):
 
 
 if __name__ == '__main__':
-    room_id = 79558
+    room_id = 71084
     # 010101
     # room_id = 989474
     # 魔王127直播间
